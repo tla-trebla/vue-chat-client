@@ -8,7 +8,7 @@ export default {
         const newMessage = ref('')
         const myId = Math.floor(Math.random() * 100000)
 
-        const consumer = ActionCable.createConsumer('ws://localhost:3000/cable')
+        const consumer = ActionCable.createConsumer('wss://rails-chat-api-production.up.railway.app/cable')
         let messagesChannel = null
 
         onMounted(() => {
