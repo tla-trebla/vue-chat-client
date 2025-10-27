@@ -1,46 +1,54 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import * as ActionCable from "@rails/actioncable"
+import * as ActionCable from '@rails/actioncable'
 
-const isDark = ref(true)
+export default {
+    setup() {
+        const isDark = ref(true)
+        const messages = ref([])
+        const newMessage = ref('')
+        const myId = Math.floor(Math.random() * 100000)
 
-const consumer = ActionCable.createConsumer('ws://localhost:3000/cable')
+        const consumer = ActionCable.createConsumer('ws://localhost:3000/cable')
+        let messagesChannel = null
 
-const messages = ref([])
-const newMessage = ref('')
-const myId = Math.floor(Math.random() * 100000)
+        onMounted(() => {
+            messagesChannel = consumer.subscriptions.create('MessagesChannel', {
+                connected() {
+                console.log('Connected to MessagesChannel')
+                },
+                received(data) {
+                console.log('Received:', data)
+                messages.value.push(data)
+                },
+                sendMessage(message) {
+                this.perform('receive', message)
+                },
+            })
+        })
 
-let messagesChannel = null
+        function sendMessage() {
+            if (!newMessage.value.trim()) return
 
-onMounted(() => {
-  messagesChannel = consumer.subscriptions.create('MessagesChannel', {
-    connected() {
-      console.log('Connected to MessagesChannel')
+            messagesChannel.sendMessage({
+                sender_id: myId,
+                content: newMessage.value.trim(),
+            })
+
+            newMessage.value = ''
+        }
+
+        onBeforeUnmount(() => {
+            if (messagesChannel) {
+                consumer.subscriptions.remove(messagesChannel)
+            }
+        })
+
+        return {
+            isDark,
+            messages,
+            newMessage,
+            sendMessage,
+            myId
+        }
     },
-
-    received(data) {
-      console.log('Received:', data)
-      messages.value.push(data)
-    },
-
-    sendMessage(message) {
-      this.perform('receive', message)
-    }
-  })
-})
-
-function sendMessage() {
-  if (!newMessage.value.trim()) return
-
-  messagesChannel.sendMessage({
-    sender_id: myId,
-    content: newMessage.value.trim()
-  })
-
-  newMessage.value = ''
 }
-
-onBeforeUnmount(() => {
-  if (messagesChannel) {
-    consumer.subscriptions.remove(messagesChannel)
-  }
-})
