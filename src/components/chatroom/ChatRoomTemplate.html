@@ -1,0 +1,21 @@
+<div class="chat-room">
+    <div class="messages">
+        <div 
+        v-for="message in messages" 
+        :key="message.id || message.content"
+        class="message"
+        :class="{ mine: message.sender_id === myId, dark: isDark }"
+        >
+            <strong>User {{ message.sender_id }}:</strong> {{ message.content }}
+        </div>
+    </div>
+
+    <form @submit.prevent="sendMessage">
+        <input 
+        v-model="newMessage" 
+        placeholder="Type your message..."
+        class="message-input"
+        />
+        <button type="submit">Send</button>
+    </form>
+</div>
